@@ -1,6 +1,5 @@
 import React, { Component } from 'react';
-import logo from './logo.svg';
-import './App.css';
+import $ from 'jquery';
 
 import './css/pure-min.css';
 import './css/side-menu.css';
@@ -9,11 +8,15 @@ class App extends Component {
 
     constructor() {
         super();        
-        this.state = {
-            lista: [
-                { nome: 'Caue Queiroz', email: 'cauenqueiroz@gmail.com' }
-            ]
-        };
+        this.state = { lista: [] };
+    }
+
+    componentDidMount() {
+        $.ajax({
+            url: 'http://localhost:8080/api/autores',
+            dataType: 'json',
+            success: result => this.setState({ lista: result })
+        });
     }
 
     render() {
@@ -73,7 +76,7 @@ class App extends Component {
                                 {
                                     this.state.lista.map(function(item) {
                                         return (
-                                            <tr>
+                                            <tr key={ item.id }>
                                                 <td>{ item.nome }</td>
                                                 <td>{ item.email }</td>
                                             </tr>
