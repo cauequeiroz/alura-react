@@ -1,5 +1,7 @@
 import React, { Component } from 'react';
 import $ from 'jquery';
+import PubSub from 'pubsub-js';
+import TratadorErros from './TratadorErros';
 
 import InputCustomizado from './components/inputCustomizado';
 import BotaoSubmitCustomizado from './components/botaoSubmitCustomizado';
@@ -25,8 +27,12 @@ export class Formulario extends Component {
             dataType: 'json',
             type: 'post',
             data: JSON.stringify(data),
-            success: result => this.props.callbackAtualizaListagem(result),
-            error: error => console.log(error.responseJSON)
+            success: result => {
+                PubSub.publish('atualiza-lista-autores', result);
+                this.setState({ nome: '', email: '', senha: '' });
+            },
+            error: error => new TratadorErros().publicarErros(error.responseJSON),
+            beforeSend: () => PubSub.publish('limpar-formulario', {})
         });
     }
 
@@ -80,7 +86,8 @@ export class Tabela extends Component {
 
 export default class AutorBox extends Component {
     constructor() {
-        super();        
+        super();
+
         this.state = { lista: [] };
     }
 
@@ -90,16 +97,16 @@ export default class AutorBox extends Component {
             dataType: 'json',
             success: result => this.setState({ lista: result })
         });
-    }
 
-    atualizaListagem(novaLista) {
-        this.setState({ lista: novaLista });
+        PubSub.subscribe('atualiza-lista-autores', function(topico, novaLista) {
+            this.setState({ lista: novaLista });
+        }.bind(this));
     }
 
     render() {
         return (
             <div className="content" id="content">
-                <Formulario callbackAtualizaListagem={this.atualizaListagem.bind(this)} />
+                <Formulario />
                 <Tabela lista={this.state.lista} />           
             </div>
         );
